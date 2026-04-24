@@ -16,20 +16,22 @@
 //   y luego las movemos a su destino final si el lote es válido.
 // ============================================================
 
-const express  = require('express');
-const router   = express.Router();
-const multer   = require('multer');
-const XLSX     = require('xlsx');
-const path     = require('path');
-const fs       = require('fs');
-const unzipper = require('unzipper');
-const sharp    = require('sharp');
-const db       = require('../database');
+const express    = require('express');
+const router     = express.Router();
+const multer     = require('multer');
+const XLSX       = require('xlsx');
+const path       = require('path');
+const fs         = require('fs');
+const os         = require('os');
+const unzipper   = require('unzipper');
+const sharp      = require('sharp');
+const cloudinary = require('../cloudinary');
+const db         = require('../database');
 
 // Tamaño máximo al que se redimensionan las imágenes (lado más largo)
-const IMG_MAX_PX      = 1200;
-// Calidad JPEG de salida (0-100). 82 es un buen equilibrio calidad/tamaño
-const IMG_QUALITY     = 82;
+const IMG_MAX_PX  = 1200;
+// Calidad JPEG de salida (0-100)
+const IMG_QUALITY = 82;
 
 
 // ============================================================
@@ -85,16 +87,30 @@ function obtenerOCrearColeccion(nombre) {
 
 
 // ============================================================
-// FUNCIÓN: comprimirImagen
+// FUNCIÓN: subirACloudinary
 // ============================================================
-// Redimensiona y comprime una imagen con sharp.
-// Siempre convierte a JPEG para uniformidad y menor tamaño.
+// Comprime la imagen con sharp y la sube a Cloudinary.
+// Devuelve la URL pública permanente de la imagen.
 // ============================================================
-async function comprimirImagen(rutaOrigen, rutaDestino) {
-  await sharp(rutaOrigen)
+async function subirACloudinary(rutaOrigen) {
+  // Comprimimos a un buffer en memoria antes de subir
+  const buffer = await sharp(rutaOrigen)
+    .rotate()
     .resize(IMG_MAX_PX, IMG_MAX_PX, { fit: 'inside', withoutEnlargement: true })
     .jpeg({ quality: IMG_QUALITY, progressive: true })
-    .toFile(rutaDestino);
+    .toBuffer();
+
+  // Subimos el buffer a Cloudinary
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'topcollectors', resource_type: 'image' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
 }
 
 
@@ -253,12 +269,8 @@ router.post('/fotomaton', upload.fields([
         continue;
       }
 
-      // ---- Todo válido: comprimimos y guardamos la imagen ----
-      // Siempre guardamos como .jpg tras la compresión
-      const nombreBase  = path.basename(imagenNombre, path.extname(imagenNombre));
-      const nombreFinal = `${Date.now()}_${nombreBase}.jpg`;
-      const rutaFinal   = path.join(dirImagenes, nombreFinal);
-      await comprimirImagen(imagenEncontrada, rutaFinal);
+      // ---- Todo válido: comprimimos y subimos a Cloudinary ----
+      const imagenUrl = await subirACloudinary(imagenEncontrada);
 
       // ---- Insertamos el lote ----
       db.prepare(`
@@ -272,7 +284,7 @@ router.post('/fotomaton', upload.fields([
         numerocromo || null,
         precio,
         descripcion || null,
-        `/imagenes/${nombreFinal}`
+        imagenUrl
       );
 
       // ---- Actualizamos caché de equipos ----
@@ -345,6 +357,28 @@ router.post('/fotomaton', upload.fields([
 
 
 // ============================================================
+// POST /api/admin/fix-orientacion
+// ============================================================
+// Añade a_90 a todas las URLs de Cloudinary para corregir
+// la orientación de las imágenes subidas desde móvil.
+// Ejecutar una sola vez.
+// ============================================================
+router.post('/fix-orientacion', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+  const result = db.prepare(`
+    UPDATE lotes
+    SET imagen_url = REPLACE(imagen_url, '/image/upload/', '/image/upload/a_90/')
+    WHERE imagen_url LIKE '%cloudinary%'
+    AND imagen_url NOT LIKE '%a_90%'
+  `).run();
+  res.json({ ok: true, actualizados: result.changes });
+});
+
+
+// ============================================================
 // GET /api/admin/verify
 // ============================================================
 // Endpoint ligero para verificar la contraseña desde el frontend.
@@ -383,46 +417,60 @@ router.post('/recomprimir', async (req, res) => {
 
     let procesadas = 0;
     let errores    = 0;
-    let ahorroTotal = 0;
 
     for (const archivo of archivos) {
       const ruta = path.join(dirImagenes, archivo);
-      const rutaTmp = ruta + '.tmp.jpg';
       try {
-        const antesStats = fs.statSync(ruta);
-        await sharp(ruta)
-          .resize(IMG_MAX_PX, IMG_MAX_PX, { fit: 'inside', withoutEnlargement: true })
-          .jpeg({ quality: IMG_QUALITY, progressive: true })
-          .toFile(rutaTmp);
+        // Subimos a Cloudinary
+        const urlNueva = await subirACloudinary(ruta);
 
-        const despuesStats = fs.statSync(rutaTmp);
-        ahorroTotal += antesStats.size - despuesStats.size;
+        // Actualizamos todos los lotes que apuntaban a esta imagen local
+        const urlLocal = `/imagenes/${archivo}`;
+        db.prepare('UPDATE lotes SET imagen_url = ? WHERE imagen_url = ?')
+          .run(urlNueva, urlLocal);
 
-        // Reemplazamos el original con la versión comprimida
+        // Borramos el archivo local
         fs.unlinkSync(ruta);
-        fs.renameSync(rutaTmp, ruta);
         procesadas++;
-      } catch {
-        if (fs.existsSync(rutaTmp)) fs.unlinkSync(rutaTmp);
+        console.log(`  ✅ Migrada: ${archivo}`);
+      } catch (e) {
+        console.error(`  ❌ Error con ${archivo}:`, e.message);
         errores++;
       }
     }
 
-    const ahorroMB = (ahorroTotal / 1024 / 1024).toFixed(1);
     res.json({
       ok: true,
-      resumen: {
-        total:      archivos.length,
-        procesadas,
-        errores,
-        ahorro_mb:  parseFloat(ahorroMB)
-      }
+      resumen: { total: archivos.length, procesadas, errores }
     });
 
   } catch (error) {
-    console.error('Error al recomprimir:', error);
-    res.status(500).json({ ok: false, error: 'Error al recomprimir imágenes' });
+    console.error('Error al migrar:', error);
+    res.status(500).json({ ok: false, error: 'Error al migrar imágenes' });
   }
+});
+
+
+// ============================================================
+// POST /api/admin/upload-db
+// ============================================================
+// Endpoint temporal para subir el SQLite local a Railway.
+// Recibe el archivo bajo el campo "database".
+// ============================================================
+const uploadDb = multer({ storage: multer.memoryStorage() });
+
+router.post('/upload-db', uploadDb.single('database'), (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+  if (!req.file) {
+    return res.status(400).json({ ok: false, error: 'Falta el archivo database' });
+  }
+
+  const destino = path.join(__dirname, '..', 'db', 'tienda.sqlite');
+  fs.writeFileSync(destino, req.file.buffer);
+  res.json({ ok: true, mensaje: 'Base de datos reemplazada. Reinicia el servidor.' });
 });
 
 
