@@ -469,8 +469,12 @@ router.post('/upload-db', uploadDb.single('database'), (req, res) => {
   }
 
   const destino = path.join(__dirname, '..', 'db', 'tienda.sqlite');
+  // Cerramos la conexión actual, reemplazamos el archivo y salimos
+  // Railway reiniciará el proceso automáticamente
+  db.close();
   fs.writeFileSync(destino, req.file.buffer);
-  res.json({ ok: true, mensaje: 'Base de datos reemplazada. Reinicia el servidor.' });
+  res.json({ ok: true, mensaje: 'Base de datos reemplazada. Reiniciando...' });
+  setTimeout(() => process.exit(0), 500);
 });
 
 
