@@ -479,6 +479,22 @@ router.post('/upload-db', uploadDb.single('database'), (req, res) => {
 
 
 // ============================================================
+// GET /api/admin/diagnostico
+// ============================================================
+router.get('/diagnostico', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+  const dbPath = path.join(__dirname, '..', 'db', 'tienda.sqlite');
+  const existe = fs.existsSync(dbPath);
+  const tamano = existe ? fs.statSync(dbPath).size : 0;
+  const lotes  = db.prepare('SELECT COUNT(*) as n FROM lotes').get().n;
+  res.json({ ok: true, dbPath, existe, tamano, lotes });
+});
+
+
+// ============================================================
 // GET /api/admin
 // ============================================================
 router.get('/', (req, res) => {
