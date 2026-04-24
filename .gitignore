@@ -5,7 +5,7 @@ node_modules/
 .env
 .env.local
 
-# Base de datos
+# Base de datos (archivos, no la carpeta)
 backend/db/tienda.sqlite
 backend/db/tienda.sqlite-shm
 backend/db/tienda.sqlite-wal
