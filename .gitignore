@@ -1,0 +1,18 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (contraseñas, claves)
+.env
+.env.local
+
+# Base de datos
+backend/db/tienda.sqlite
+backend/db/tienda.sqlite-shm
+backend/db/tienda.sqlite-wal
+
+# Archivos subidos (imágenes, logs, temporales)
+backend/uploads/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

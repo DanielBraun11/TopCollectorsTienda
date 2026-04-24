@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — TopCollectors</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- ======================================================
+       HEADER
+       ====================================================== -->
+  <header class="header">
+    <div class="header__logo">
+      <span class="header__logo-icon">⚽</span>
+      <div>
+        <span class="header__logo-text">TopCollectors</span>
+        <span class="header__logo-sub">Panel de administración</span>
+      </div>
+    </div>
+    <nav class="header__nav">
+      <a href="index.html">Tienda</a>
+      <a href="admin.html" class="active">Admin</a>
+    </nav>
+  </header>
+
+
+  <!-- ======================================================
+       LOGIN GATE
+       ====================================================== -->
+  <div id="login-gate" class="login-gate">
+    <div class="login-card">
+      <div class="login-card__icon">🔐</div>
+      <h1 class="login-card__titulo">Acceso admin</h1>
+      <p class="login-card__sub">Introduce la contraseña de administrador</p>
+      <div class="login-card__input-wrap">
+        <input
+          id="login-input"
+          class="login-card__input"
+          type="password"
+          placeholder="Contraseña"
+          autocomplete="current-password"
+        >
+        <button type="button" id="toggle-pw" class="login-card__eye" title="Mostrar contraseña">👁</button>
+      </div>
+      <button id="login-btn" class="login-card__btn">Entrar</button>
+      <p id="login-error" class="login-card__error">Contraseña incorrecta</p>
+    </div>
+  </div>
+
+
+  <!-- ======================================================
+       PANEL ADMIN (oculto hasta autenticarse)
+       ====================================================== -->
+  <div id="admin-panel" hidden>
+
+    <div class="admin-main">
+      <h1 class="admin-titulo">📤 Fotomatón</h1>
+      <p class="admin-sub">Sube un Excel con los datos y un ZIP con las imágenes para importar lotes en bloque.</p>
+
+      <!-- Tarjeta de subida -->
+      <div class="admin-card">
+        <h2 class="admin-card__titulo">📁 Archivos a importar</h2>
+
+        <!-- Drop Excel -->
+        <div id="drop-excel" class="drop-zone">
+          <input id="input-excel" type="file" accept=".xlsx,.xls">
+          <div class="drop-zone__icon">📊</div>
+          <div class="drop-zone__texto">
+            <strong>Arrastra el Excel aquí</strong><br>
+            o haz clic para seleccionarlo (.xlsx)
+          </div>
+          <div id="archivo-excel" class="drop-zone__archivo"></div>
+        </div>
+
+        <!-- Drop ZIP -->
+        <div id="drop-zip" class="drop-zone">
+          <input id="input-zip" type="file" accept=".zip">
+          <div class="drop-zone__icon">🗜️</div>
+          <div class="drop-zone__texto">
+            <strong>Arrastra el ZIP de imágenes aquí</strong><br>
+            o haz clic para seleccionarlo (.zip)
+          </div>
+          <div id="archivo-zip" class="drop-zone__archivo"></div>
+        </div>
+
+        <!-- Botón de subida -->
+        <button id="btn-subir" class="btn-subir" disabled>
+          <span>⬆️</span> Subir e importar
+        </button>
+
+        <!-- Barra de progreso -->
+        <div id="progress-wrap" class="progress-wrap">
+          <div class="progress-bar-bg">
+            <div id="progress-fill" class="progress-bar-fill"></div>
+          </div>
+          <div id="progress-txt" class="progress-texto">Preparando…</div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultado" class="resultado"></div>
+
+      </div>
+
+
+      <!-- Instrucciones del Excel -->
+      <div class="instrucciones">
+        <h3 class="instrucciones__titulo">📋 Formato del Excel</h3>
+        <p style="font-size:0.85rem;color:#888;margin-bottom:14px;">
+          La primera fila debe ser la cabecera con exactamente estos nombres de columna:
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Columna</th>
+              <th>Descripción</th>
+              <th>Ejemplo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>coleccion</code> <span class="tag-oblig">obligatorio</span></td>
+              <td>Nombre completo de la colección. El año se extrae automáticamente.</td>
+              <td>Liga Este 2003-04</td>
+            </tr>
+            <tr>
+              <td><code>titulo</code> <span class="tag-oblig">obligatorio</span></td>
+              <td>Título del cromo tal como aparecerá en la tienda.</td>
+              <td>Ronaldinho</td>
+            </tr>
+            <tr>
+              <td><code>precio</code> <span class="tag-oblig">obligatorio</span></td>
+              <td>Precio en euros (número decimal).</td>
+              <td>4.50</td>
+            </tr>
+            <tr>
+              <td><code>imagen</code> <span class="tag-oblig">obligatorio</span></td>
+              <td>Nombre exacto del archivo dentro del ZIP (con extensión).</td>
+              <td>ronaldinho_001.jpg</td>
+            </tr>
+            <tr>
+              <td><code>jugador</code> <span class="tag-opcional">opcional</span></td>
+              <td>Nombre completo del jugador.</td>
+              <td>Ronaldinho Gaúcho</td>
+            </tr>
+            <tr>
+              <td><code>equipo</code> <span class="tag-opcional">opcional</span></td>
+              <td>Nombre del equipo. Alimenta el filtro por equipo.</td>
+              <td>FC Barcelona</td>
+            </tr>
+            <tr>
+              <td><code>numero_cromo</code> <span class="tag-opcional">opcional</span></td>
+              <td>Número del cromo dentro de la colección.</td>
+              <td>142</td>
+            </tr>
+            <tr>
+              <td><code>descripcion</code> <span class="tag-opcional">opcional</span></td>
+              <td>Descripción libre del estado o detalles del cromo.</td>
+              <td>Estado excelente, sin doblez</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="font-size:0.82rem;color:#aaa;margin-top:16px;">
+          ⚠️ Los lotes sin imagen encontrada en el ZIP son <strong>rechazados</strong> y se anotan en un log en <code>uploads/logs/</code>.
+          Los duplicados (mismo título + precio + colección) también se descartan.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

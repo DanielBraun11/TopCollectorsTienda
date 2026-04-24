@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopCollectors — Cromos de fútbol de colección</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ======================================================
+       HEADER
+       ====================================================== -->
+  <header class="header">
+    <div class="header__logo">
+      <span class="header__logo-icon">⚽</span>
+      <div>
+        <span class="header__logo-text">TopCollectors</span>
+        <span class="header__logo-sub">Cromos de fútbol de colección</span>
+      </div>
+    </div>
+    <nav class="header__nav">
+      <a href="index.html" class="active">Tienda</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+
+
+  <!-- ======================================================
+       BARRA DE BÚSQUEDA
+       ====================================================== -->
+  <section class="search-section">
+    <div class="search-section__inner">
+      <span class="search-section__label">Busca por jugador, equipo, colección…</span>
+      <form id="search-form" class="search-box">
+        <input
+          id="search-input"
+          class="search-box__input"
+          type="search"
+          placeholder="Ej: Ronaldinho, Liga Este, Barcelona…"
+          autocomplete="off"
+        >
+        <button type="submit" class="search-box__btn">Buscar</button>
+      </form>
+      <div id="search-clear" class="search-clear">
+        <span>Mostrando resultados para <strong id="search-texto"></strong></span>
+        <button class="search-clear__btn">✕ Limpiar</button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ======================================================
+       LAYOUT PRINCIPAL
+       ====================================================== -->
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <button id="btn-todos" class="btn-todos">
+        <span>🗂️</span> Todos los lotes
+      </button>
+
+      <!-- Panel de colecciones -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel__header">
+          <span class="panel__header-icon">📁</span>
+          Colecciones
+        </div>
+        <ul id="colecciones-list" class="panel__list">
+          <li class="panel__empty">Cargando…</li>
+        </ul>
+      </div>
+
+      <!-- Panel de equipos (oculto hasta seleccionar colección) -->
+      <div id="equipos-panel" class="panel" hidden>
+        <div class="panel__header">
+          <span class="panel__header-icon">⚽</span>
+          Equipos
+        </div>
+        <div class="panel__search">
+          <input
+            id="equipo-search"
+            class="panel__search-input"
+            type="text"
+            placeholder="Filtrar equipo…"
+            autocomplete="off"
+          >
+        </div>
+        <ul id="equipos-list" class="panel__list"></ul>
+      </div>
+
+    </aside>
+
+
+    <!-- CONTENIDO -->
+    <main class="content">
+      <div class="content__header">
+        <div>
+          <h1 id="titulo-principal" class="content__titulo">Todos los lotes</h1>
+          <p id="subtitulo" class="content__subtitulo">Navega por colección o usa la búsqueda</p>
+        </div>
+        <div id="contador" class="content__contador">
+          <span>—</span> lotes
+        </div>
+      </div>
+
+      <div id="lotes-grid" class="grid">
+        <div class="estado">
+          <div class="spinner"></div>
+          <div class="estado__texto">Cargando lotes…</div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+
+  <!-- ======================================================
+       FOOTER
+       ====================================================== -->
+  <footer class="footer">
+    <strong>TopCollectors</strong> · Cromos de fútbol de colección ·
+    <a href="mailto:danielbraunsandino@gmail.com">Contacto</a>
+  </footer>
+
+
+  <!-- ======================================================
+       MODAL DE DETALLE
+       ====================================================== -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal">
+      <button class="modal__close" onclick="cerrarModal()">✕</button>
+      <div id="modal-contenido" style="display:contents"></div>
+    </div>
+  </div>
+
+
+  <script src="js/app.js"></script>
+</body>
+</html>

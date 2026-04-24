@@ -1,0 +1,401 @@
+/* ============================================================
+   ADMIN CSS — Panel fotomatón
+   ============================================================ */
+
+.admin-body {
+  background: #f4f3ef;
+}
+
+/* ---- Login gate ---- */
+.login-gate {
+  min-height: 100vh;
+  display:    flex;
+  align-items: center;
+  justify-content: center;
+  padding:    20px;
+}
+
+.login-card {
+  background:    #fff;
+  border-radius: 14px;
+  padding:       48px 40px;
+  max-width:     400px;
+  width:         100%;
+  box-shadow:    0 8px 32px rgba(0,0,0,0.12);
+  text-align:    center;
+}
+
+.login-card__icon {
+  font-size:     3rem;
+  margin-bottom: 16px;
+}
+
+.login-card__titulo {
+  font-size:     1.4rem;
+  font-weight:   800;
+  margin-bottom: 6px;
+}
+
+.login-card__sub {
+  font-size:   0.9rem;
+  color:       #888;
+  margin-bottom: 28px;
+}
+
+.login-card__input-wrap {
+  position:      relative;
+  margin-bottom: 12px;
+}
+
+.login-card__input {
+  width:         100%;
+  border:        1.5px solid #e0ddd4;
+  border-radius: 8px;
+  padding:       12px 44px 12px 16px;
+  font-size:     1rem;
+  font-family:   inherit;
+  outline:       none;
+  transition:    border-color 0.18s;
+}
+
+.login-card__input:focus { border-color: #40916c; }
+
+.login-card__eye {
+  position:   absolute;
+  right:      12px;
+  top:        50%;
+  transform:  translateY(-50%);
+  background: none;
+  border:     none;
+  cursor:     pointer;
+  font-size:  1.1rem;
+  padding:    4px;
+  opacity:    0.5;
+  transition: opacity 0.18s;
+}
+
+.login-card__eye:hover { opacity: 1; }
+
+.login-card__btn {
+  width:         100%;
+  background:    #2d6a4f;
+  color:         #fff;
+  border:        none;
+  border-radius: 8px;
+  padding:       12px;
+  font-size:     1rem;
+  font-weight:   700;
+  font-family:   inherit;
+  cursor:        pointer;
+  transition:    background 0.18s;
+}
+
+.login-card__btn:hover { background: #1b4332; }
+
+.login-card__error {
+  color:       #c0392b;
+  font-size:   0.85rem;
+  margin-top:  10px;
+  display:     none;
+}
+
+.login-card__error.visible { display: block; }
+
+
+/* ---- Admin layout ---- */
+.admin-main {
+  max-width: 860px;
+  margin:    0 auto;
+  padding:   32px 24px 60px;
+}
+
+.admin-titulo {
+  font-size:     1.6rem;
+  font-weight:   800;
+  margin-bottom: 4px;
+}
+
+.admin-sub {
+  font-size:   0.9rem;
+  color:       #888;
+  margin-bottom: 32px;
+}
+
+/* ---- Tarjeta principal ---- */
+.admin-card {
+  background:    #fff;
+  border:        1px solid #e0ddd4;
+  border-radius: 12px;
+  padding:       32px;
+  box-shadow:    0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 24px;
+}
+
+.admin-card__titulo {
+  font-size:     1.1rem;
+  font-weight:   700;
+  margin-bottom: 20px;
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+}
+
+/* ---- Zona de drop ---- */
+.drop-zone {
+  border:        2px dashed #c5bfb3;
+  border-radius: 10px;
+  padding:       28px 20px;
+  text-align:    center;
+  cursor:        pointer;
+  transition:    border-color 0.2s, background 0.2s;
+  background:    #faf9f6;
+  margin-bottom: 16px;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+  border-color: #40916c;
+  background:   #f0f7f3;
+}
+
+.drop-zone.has-file {
+  border-color: #2d6a4f;
+  border-style: solid;
+  background:   #edf7f2;
+}
+
+.drop-zone__icon {
+  font-size:     2rem;
+  margin-bottom: 8px;
+}
+
+.drop-zone__texto {
+  font-size:   0.9rem;
+  color:       #666;
+  line-height: 1.5;
+}
+
+.drop-zone__texto strong { color: #2d6a4f; }
+
+.drop-zone__archivo {
+  display:     none;
+  font-size:   0.9rem;
+  font-weight: 600;
+  color:       #2d6a4f;
+  margin-top:  8px;
+}
+
+.drop-zone.has-file .drop-zone__archivo { display: block; }
+.drop-zone.has-file .drop-zone__texto   { display: none; }
+
+.drop-zone input[type="file"] {
+  display: none;
+}
+
+/* ---- Botón de subida ---- */
+.btn-subir {
+  width:         100%;
+  background:    #b5942a;
+  color:         #fff;
+  border:        none;
+  border-radius: 8px;
+  padding:       14px;
+  font-size:     1.05rem;
+  font-weight:   700;
+  font-family:   inherit;
+  cursor:        pointer;
+  transition:    background 0.18s, opacity 0.18s;
+  margin-top:    8px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  gap:           8px;
+}
+
+.btn-subir:hover:not(:disabled) { background: #d4af37; }
+
+.btn-subir:disabled {
+  opacity: 0.5;
+  cursor:  not-allowed;
+}
+
+/* ---- Progreso ---- */
+.progress-wrap {
+  display:    none;
+  margin-top: 20px;
+}
+
+.progress-wrap.visible { display: block; }
+
+.progress-bar-bg {
+  background:    #e8e4dc;
+  border-radius: 8px;
+  height:        10px;
+  overflow:      hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+  background:    #2d6a4f;
+  height:        100%;
+  width:         0%;
+  border-radius: 8px;
+  transition:    width 0.3s;
+}
+
+.progress-texto {
+  font-size: 0.85rem;
+  color:     #666;
+}
+
+/* ---- Resultado ---- */
+.resultado {
+  display:       none;
+  border-radius: 10px;
+  padding:       20px 24px;
+  margin-top:    20px;
+}
+
+.resultado.visible { display: block; }
+
+.resultado.ok {
+  background: #edf7f2;
+  border:     1px solid #b7dfcc;
+}
+
+.resultado.error {
+  background: #fdf0ef;
+  border:     1px solid #f5c6c2;
+}
+
+.resultado__titulo {
+  font-size:     1rem;
+  font-weight:   700;
+  margin-bottom: 12px;
+  display:       flex;
+  align-items:   center;
+  gap:           6px;
+}
+
+.resultado.ok    .resultado__titulo { color: #1b5e37; }
+.resultado.error .resultado__titulo { color: #a93226; }
+
+.resultado__stats {
+  display:  flex;
+  gap:      20px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat__num {
+  font-size:   2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.stat__label {
+  font-size: 0.78rem;
+  color:     #666;
+  margin-top: 2px;
+}
+
+.stat.subidos   .stat__num { color: #2d6a4f; }
+.stat.rechazados .stat__num { color: #c0392b; }
+
+.resultado__log {
+  margin-top:  12px;
+  font-size:   0.82rem;
+  color:       #888;
+  padding-top: 12px;
+  border-top:  1px solid rgba(0,0,0,0.06);
+}
+
+/* ---- Instrucciones ---- */
+.instrucciones {
+  background:    #fff;
+  border:        1px solid #e0ddd4;
+  border-radius: 12px;
+  padding:       28px 32px;
+  box-shadow:    0 2px 8px rgba(0,0,0,0.05);
+}
+
+.instrucciones__titulo {
+  font-size:   1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color:       #444;
+}
+
+.instrucciones table {
+  width:           100%;
+  border-collapse: collapse;
+  font-size:       0.88rem;
+}
+
+.instrucciones th {
+  background:    #f4f3ef;
+  padding:       8px 12px;
+  text-align:    left;
+  font-weight:   700;
+  border-bottom: 2px solid #e0ddd4;
+  color:         #555;
+}
+
+.instrucciones td {
+  padding:       8px 12px;
+  border-bottom: 1px solid #f0ede6;
+  vertical-align: top;
+}
+
+.instrucciones tr:last-child td { border-bottom: none; }
+
+.tag-oblig {
+  display:       inline-block;
+  background:    #fde8e7;
+  color:         #c0392b;
+  font-size:     0.7rem;
+  font-weight:   700;
+  padding:       1px 6px;
+  border-radius: 4px;
+  margin-left:   4px;
+}
+
+.tag-opcional {
+  display:       inline-block;
+  background:    #e8f4ee;
+  color:         #2d6a4f;
+  font-size:     0.7rem;
+  font-weight:   700;
+  padding:       1px 6px;
+  border-radius: 4px;
+  margin-left:   4px;
+}
+
+/* ---- Sesión ---- */
+.admin-session {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+}
+
+.admin-session__user {
+  font-size:  0.85rem;
+  color:      rgba(255,255,255,0.8);
+}
+
+.btn-logout {
+  background:    rgba(255,255,255,0.15);
+  border:        none;
+  border-radius: 6px;
+  color:         rgba(255,255,255,0.9);
+  padding:       5px 12px;
+  font-size:     0.82rem;
+  font-family:   inherit;
+  cursor:        pointer;
+  transition:    background 0.18s;
+}
+
+.btn-logout:hover { background: rgba(255,255,255,0.28); }
