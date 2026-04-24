@@ -23,7 +23,13 @@ const XLSX     = require('xlsx');
 const path     = require('path');
 const fs       = require('fs');
 const unzipper = require('unzipper');
+const sharp    = require('sharp');
 const db       = require('../database');
+
+// Tamaño máximo al que se redimensionan las imágenes (lado más largo)
+const IMG_MAX_PX      = 1200;
+// Calidad JPEG de salida (0-100). 82 es un buen equilibrio calidad/tamaño
+const IMG_QUALITY     = 82;
 
 
 // ============================================================
@@ -75,6 +81,20 @@ function obtenerOCrearColeccion(nombre) {
   }
 
   return coleccion;
+}
+
+
+// ============================================================
+// FUNCIÓN: comprimirImagen
+// ============================================================
+// Redimensiona y comprime una imagen con sharp.
+// Siempre convierte a JPEG para uniformidad y menor tamaño.
+// ============================================================
+async function comprimirImagen(rutaOrigen, rutaDestino) {
+  await sharp(rutaOrigen)
+    .resize(IMG_MAX_PX, IMG_MAX_PX, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: IMG_QUALITY, progressive: true })
+    .toFile(rutaDestino);
 }
 
 
@@ -233,11 +253,12 @@ router.post('/fotomaton', upload.fields([
         continue;
       }
 
-      // ---- Todo válido: movemos la imagen a su destino final ----
-      // Usamos un nombre único para evitar colisiones entre lotes
-      const nombreFinal = `${Date.now()}_${imagenNombre}`;
+      // ---- Todo válido: comprimimos y guardamos la imagen ----
+      // Siempre guardamos como .jpg tras la compresión
+      const nombreBase  = path.basename(imagenNombre, path.extname(imagenNombre));
+      const nombreFinal = `${Date.now()}_${nombreBase}.jpg`;
       const rutaFinal   = path.join(dirImagenes, nombreFinal);
-      fs.copyFileSync(imagenEncontrada, rutaFinal);
+      await comprimirImagen(imagenEncontrada, rutaFinal);
 
       // ---- Insertamos el lote ----
       db.prepare(`
@@ -340,14 +361,81 @@ router.get('/verify', (req, res) => {
 
 
 // ============================================================
+// POST /api/admin/recomprimir
+// ============================================================
+// Recomprime todas las imágenes ya subidas en uploads/imagenes/.
+// Útil para reducir el tamaño de imágenes subidas antes de
+// añadir la compresión automática.
+// ============================================================
+router.post('/recomprimir', async (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+
+  const dirImagenes = path.join(__dirname, '..', 'uploads', 'imagenes');
+  const extensiones = ['.jpg', '.jpeg', '.png', '.webp'];
+
+  try {
+    const archivos = fs.readdirSync(dirImagenes).filter(f =>
+      extensiones.includes(path.extname(f).toLowerCase())
+    );
+
+    let procesadas = 0;
+    let errores    = 0;
+    let ahorroTotal = 0;
+
+    for (const archivo of archivos) {
+      const ruta = path.join(dirImagenes, archivo);
+      const rutaTmp = ruta + '.tmp.jpg';
+      try {
+        const antesStats = fs.statSync(ruta);
+        await sharp(ruta)
+          .resize(IMG_MAX_PX, IMG_MAX_PX, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: IMG_QUALITY, progressive: true })
+          .toFile(rutaTmp);
+
+        const despuesStats = fs.statSync(rutaTmp);
+        ahorroTotal += antesStats.size - despuesStats.size;
+
+        // Reemplazamos el original con la versión comprimida
+        fs.unlinkSync(ruta);
+        fs.renameSync(rutaTmp, ruta);
+        procesadas++;
+      } catch {
+        if (fs.existsSync(rutaTmp)) fs.unlinkSync(rutaTmp);
+        errores++;
+      }
+    }
+
+    const ahorroMB = (ahorroTotal / 1024 / 1024).toFixed(1);
+    res.json({
+      ok: true,
+      resumen: {
+        total:      archivos.length,
+        procesadas,
+        errores,
+        ahorro_mb:  parseFloat(ahorroMB)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error al recomprimir:', error);
+    res.status(500).json({ ok: false, error: 'Error al recomprimir imágenes' });
+  }
+});
+
+
+// ============================================================
 // GET /api/admin
 // ============================================================
 router.get('/', (req, res) => {
   res.json({
     ok: true,
     endpoints: {
-      verify:    'GET  /api/admin/verify    (cabecera: x-admin-password)',
-      fotomaton: 'POST /api/admin/fotomaton  (cabecera: x-admin-password, campos: excel + imagenes)'
+      verify:      'GET  /api/admin/verify       (cabecera: x-admin-password)',
+      fotomaton:   'POST /api/admin/fotomaton     (cabecera: x-admin-password, campos: excel + imagenes)',
+      recomprimir: 'POST /api/admin/recomprimir  (cabecera: x-admin-password)'
     }
   });
 });

@@ -27,6 +27,9 @@ const $progressFill = document.getElementById('progress-fill');
 const $progressTxt  = document.getElementById('progress-txt');
 const $resultado   = document.getElementById('resultado');
 
+const $btnRecomprimir       = document.getElementById('btn-recomprimir');
+const $resultadoRecomprimir = document.getElementById('resultado-recomprimir');
+
 let password = '';
 
 
@@ -246,6 +249,51 @@ function resetForm() {
   $archivoZip.textContent   = '';
   $btnSubir.disabled = true;
 }
+
+
+// ============================================================
+// RECOMPRIMIR IMÁGENES EXISTENTES
+// ============================================================
+$btnRecomprimir?.addEventListener('click', async () => {
+  if (!confirm('¿Recomprimir todas las imágenes existentes? El proceso puede tardar varios minutos.')) return;
+
+  $btnRecomprimir.disabled = true;
+  $btnRecomprimir.textContent = '⏳ Recomprimiendo…';
+  $resultadoRecomprimir.className = 'resultado';
+
+  try {
+    const res  = await fetch(`${API}/admin/recomprimir`, {
+      method:  'POST',
+      headers: { 'x-admin-password': password }
+    });
+    const data = await res.json();
+
+    if (!data.ok) throw new Error(data.error);
+
+    const r = data.resumen;
+    $resultadoRecomprimir.className = 'resultado ok visible';
+    $resultadoRecomprimir.innerHTML = `
+      <div class="resultado__titulo">✅ Recompresión completada</div>
+      <div class="resultado__stats">
+        <div class="stat">
+          <div class="stat__num">${r.procesadas}</div>
+          <div class="stat__label">Imágenes procesadas</div>
+        </div>
+        <div class="stat subidos">
+          <div class="stat__num">${r.ahorro_mb} MB</div>
+          <div class="stat__label">Espacio ahorrado</div>
+        </div>
+        ${r.errores > 0 ? `<div class="stat rechazados"><div class="stat__num">${r.errores}</div><div class="stat__label">Errores</div></div>` : ''}
+      </div>
+    `;
+  } catch (err) {
+    $resultadoRecomprimir.className = 'resultado error visible';
+    $resultadoRecomprimir.innerHTML = `<div class="resultado__titulo">❌ Error</div><p style="font-size:0.9rem;color:#a93226;">${err.message}</p>`;
+  } finally {
+    $btnRecomprimir.disabled = false;
+    $btnRecomprimir.innerHTML = '🗜️ Recomprimir imágenes existentes';
+  }
+});
 
 
 // ============================================================

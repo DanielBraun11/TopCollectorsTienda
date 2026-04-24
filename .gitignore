@@ -13,6 +13,9 @@ backend/db/tienda.sqlite-wal
 # Archivos subidos (imágenes, logs, temporales)
 backend/uploads/
 
+# Claude Code
+.claude/
+
 # Sistema operativo
 .DS_Store
 Thumbs.db
