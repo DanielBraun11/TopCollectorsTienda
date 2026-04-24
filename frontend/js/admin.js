@@ -2,7 +2,7 @@
 // admin.js — Panel fotomatón
 // ============================================================
 
-const API = 'http://localhost:3000/api';
+const API = 'https://topcollectorstienda-production.up.railway.app/api';
 const STORAGE_KEY = 'tc_admin_pw';
 
 // ---- Refs DOM ----
@@ -273,15 +273,11 @@ $btnRecomprimir?.addEventListener('click', async () => {
     const r = data.resumen;
     $resultadoRecomprimir.className = 'resultado ok visible';
     $resultadoRecomprimir.innerHTML = `
-      <div class="resultado__titulo">✅ Recompresión completada</div>
+      <div class="resultado__titulo">✅ Migración completada</div>
       <div class="resultado__stats">
-        <div class="stat">
-          <div class="stat__num">${r.procesadas}</div>
-          <div class="stat__label">Imágenes procesadas</div>
-        </div>
         <div class="stat subidos">
-          <div class="stat__num">${r.ahorro_mb} MB</div>
-          <div class="stat__label">Espacio ahorrado</div>
+          <div class="stat__num">${r.procesadas}</div>
+          <div class="stat__label">Migradas a Cloudinary</div>
         </div>
         ${r.errores > 0 ? `<div class="stat rechazados"><div class="stat__num">${r.errores}</div><div class="stat__label">Errores</div></div>` : ''}
       </div>
@@ -291,7 +287,7 @@ $btnRecomprimir?.addEventListener('click', async () => {
     $resultadoRecomprimir.innerHTML = `<div class="resultado__titulo">❌ Error</div><p style="font-size:0.9rem;color:#a93226;">${err.message}</p>`;
   } finally {
     $btnRecomprimir.disabled = false;
-    $btnRecomprimir.innerHTML = '🗜️ Recomprimir imágenes existentes';
+    $btnRecomprimir.innerHTML = '☁️ Migrar imágenes a Cloudinary';
   }
 });
 

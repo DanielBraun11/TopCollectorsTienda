@@ -2,7 +2,7 @@
 // app.js — Lógica de la tienda pública
 // ============================================================
 
-const API = 'http://localhost:3000/api';
+const API = 'https://topcollectorstienda-production.up.railway.app/api';
 
 // ---- Estado de la app ----
 const estado = {
@@ -251,7 +251,7 @@ function renderLotes(lotes, total) {
     <div class="card" onclick="abrirModal(${l.id})">
       <div class="card__img-wrap">
         ${l.imagen_url
-          ? `<img class="card__img" src="http://localhost:3000${l.imagen_url}" alt="${escHtml(l.titulo)}" loading="lazy">`
+          ? `<img class="card__img" src="${l.imagen_url}" alt="${escHtml(l.titulo)}" loading="lazy">`
           : `<div class="card__img-placeholder">🖼️</div>`}
         ${l.numero_cromo ? `<span class="card__numero">#${escHtml(l.numero_cromo)}</span>` : ''}
       </div>
@@ -312,7 +312,7 @@ function renderModal(l) {
   $modalContenido.innerHTML = `
     <div class="modal__img-wrap">
       ${l.imagen_url
-        ? `<img class="modal__img" src="http://localhost:3000${l.imagen_url}" alt="${escHtml(l.titulo)}">`
+        ? `<img class="modal__img" src="${l.imagen_url}" alt="${escHtml(l.titulo)}">`
         : `<div class="card__img-placeholder" style="height:100%;font-size:5rem;">🖼️</div>`}
     </div>
     <div class="modal__body">
