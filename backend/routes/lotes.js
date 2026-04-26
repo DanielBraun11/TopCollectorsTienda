@@ -73,7 +73,7 @@ router.get('/', (req, res) => {
     params.push(estadoVendido);
 
     if (coleccion_id) {
-      sql += ' ORDER BY CASE WHEN l.numero_cromo IS NULL OR l.numero_cromo = "" THEN 1 ELSE 0 END ASC, CAST(l.numero_cromo AS INTEGER) ASC';
+      sql += " ORDER BY CASE WHEN l.numero_cromo IS NULL OR l.numero_cromo = '' THEN 1 ELSE 0 END ASC, CAST(l.numero_cromo AS INTEGER) ASC";
     } else {
       sql += ' ORDER BY l.creado_en DESC';
     }
