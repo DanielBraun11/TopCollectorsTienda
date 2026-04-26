@@ -396,6 +396,24 @@ router.post('/quitar-orientacion', (req, res) => {
 
 
 // ============================================================
+// POST /api/admin/fix-exif
+// ============================================================
+router.post('/fix-exif', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+  const result = db.prepare(`
+    UPDATE lotes
+    SET imagen_url = REPLACE(imagen_url, '/image/upload/', '/image/upload/a_exif/')
+    WHERE imagen_url LIKE '%cloudinary%'
+    AND imagen_url NOT LIKE '%a_exif%'
+  `).run();
+  res.json({ ok: true, actualizados: result.changes });
+});
+
+
+// ============================================================
 // GET /api/admin/verify
 // ============================================================
 // Endpoint ligero para verificar la contraseña desde el frontend.
