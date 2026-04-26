@@ -72,7 +72,11 @@ router.get('/', (req, res) => {
     sql += ' AND l.vendido = ?';
     params.push(estadoVendido);
 
-    sql += ' ORDER BY l.creado_en DESC';
+    if (coleccion_id) {
+      sql += ' ORDER BY CAST(l.numero_cromo AS INTEGER) ASC, l.numero_cromo ASC';
+    } else {
+      sql += ' ORDER BY l.creado_en DESC';
+    }
 
     const lotes = db.prepare(sql).all(...params);
     res.json({ ok: true, total: lotes.length, lotes });
