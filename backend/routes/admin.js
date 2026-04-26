@@ -379,6 +379,23 @@ router.post('/fix-orientacion', (req, res) => {
 
 
 // ============================================================
+// POST /api/admin/quitar-orientacion
+// ============================================================
+router.post('/quitar-orientacion', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+  const result = db.prepare(`
+    UPDATE lotes
+    SET imagen_url = REPLACE(imagen_url, '/image/upload/a_90/', '/image/upload/')
+    WHERE imagen_url LIKE '%a_90%'
+  `).run();
+  res.json({ ok: true, actualizados: result.changes });
+});
+
+
+// ============================================================
 // GET /api/admin/verify
 // ============================================================
 // Endpoint ligero para verificar la contraseña desde el frontend.
