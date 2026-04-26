@@ -115,8 +115,8 @@ button { cursor: pointer; font-family: inherit; }
    BARRA DE BÚSQUEDA
    ============================================================ */
 .search-section {
-  background:  linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
-  padding:     30px 28px;
+  background:  transparent;
+  padding:     24px 28px;
 }
 
 .search-section__inner {
@@ -124,21 +124,14 @@ button { cursor: pointer; font-family: inherit; }
   margin:     0 auto;
 }
 
-.search-section__label {
-  color:         rgba(255,255,255,0.92);
-  font-size:     0.9rem;
-  font-weight:   600;
-  margin-bottom: 12px;
-  display:       block;
-  letter-spacing: 0.2px;
-}
+.search-section__label { display: none; }
 
 .search-box {
   display:       flex;
   gap:           0;
   border-radius: var(--radio);
   overflow:      hidden;
-  box-shadow:    0 4px 20px rgba(0,0,0,0.18);
+  box-shadow:    0 6px 32px rgba(0,0,0,0.35);
 }
 
 .search-box__input {
