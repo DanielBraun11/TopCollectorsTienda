@@ -282,7 +282,7 @@ function actualizarTitulo() {
     $subtitulo.textContent       = 'Selecciona un equipo o navega todos los lotes';
   } else {
     $tituloPrincipal.textContent = 'Todos los lotes';
-    $subtitulo.textContent       = 'Navega por colección o usa la búsqueda';
+    $subtitulo.textContent       = '';
   }
 }
 
