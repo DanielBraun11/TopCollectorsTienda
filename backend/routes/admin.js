@@ -479,6 +479,25 @@ router.post('/upload-db', uploadDb.single('database'), (req, res) => {
 
 
 // ============================================================
+// POST /api/admin/sql
+// ============================================================
+router.post('/sql', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ ok: false, error: 'Falta query' });
+  try {
+    const result = db.prepare(query).run();
+    res.json({ ok: true, changes: result.changes });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+
+// ============================================================
 // GET /api/admin/diagnostico
 // ============================================================
 router.get('/diagnostico', (req, res) => {
