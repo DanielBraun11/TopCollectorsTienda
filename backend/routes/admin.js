@@ -298,33 +298,7 @@ router.post('/fotomaton', upload.fields([
     }
 
     // --------------------------------------------------------
-    // 4. GENERAMOS EL LOG DE RECHAZADOS
-    // --------------------------------------------------------
-    let nombreLog = null;
-    if (logRechazados.length > 0) {
-      const dirLogs = path.join(__dirname, '..', 'uploads', 'logs');
-      if (!fs.existsSync(dirLogs)) fs.mkdirSync(dirLogs, { recursive: true });
-
-      nombreLog       = `rechazados_${Date.now()}.txt`;
-      const rutaLog   = path.join(dirLogs, nombreLog);
-
-      const contenido = logRechazados.map(r =>
-        `Fila ${r.fila} | Motivo: ${r.motivo}\n  Datos: ${JSON.stringify(r.datos)}`
-      ).join('\n\n');
-
-      fs.writeFileSync(
-        rutaLog,
-        `LOTES RECHAZADOS — ${new Date().toLocaleString('es-ES')}\n${'='.repeat(60)}\n\n${contenido}\n`
-      );
-
-      console.log(`  ⚠️  Log guardado: ${rutaLog}`);
-    }
-
-    // --------------------------------------------------------
-    // 5. LIMPIEZA DE ARCHIVOS TEMPORALES
-    // --------------------------------------------------------
-    // Borramos el Excel, el zip y la carpeta de extracción
-    // temporal para no acumular basura en el servidor.
+    // 4. LIMPIEZA DE ARCHIVOS TEMPORALES
     // --------------------------------------------------------
     try {
       fs.unlinkSync(rutaExcel);
@@ -335,7 +309,7 @@ router.post('/fotomaton', upload.fields([
     }
 
     // --------------------------------------------------------
-    // 6. RESPUESTA FINAL
+    // 5. RESPUESTA FINAL
     // --------------------------------------------------------
     res.json({
       ok: true,
@@ -343,9 +317,9 @@ router.post('/fotomaton', upload.fields([
         total_filas:    filas.length,
         subidos,
         rechazados,
-        log_rechazados: nombreLog
-          ? `Revisa el archivo: uploads/logs/${nombreLog}`
-          : 'Sin rechazados ✅'
+        detalle_rechazados: logRechazados.map(r =>
+          `Fila ${r.fila} — ${r.motivo} | ${JSON.stringify(r.datos)}`
+        )
       }
     });
 

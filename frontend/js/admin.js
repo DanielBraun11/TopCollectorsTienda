@@ -224,7 +224,13 @@ function mostrarResultado(data) {
         <div class="stat__label">Rechazados</div>
       </div>
     </div>
-    ${r.rechazados > 0 ? `<div class="resultado__log">⚠️ ${r.log_rechazados}</div>` : ''}
+    ${r.rechazados > 0 && r.detalle_rechazados?.length > 0 ? `
+      <div class="resultado__log">
+        <strong>⚠️ Detalle de rechazados:</strong>
+        <ul style="margin-top:8px;padding-left:18px;font-size:0.82rem;line-height:1.8;">
+          ${r.detalle_rechazados.map(d => `<li>${d}</li>`).join('')}
+        </ul>
+      </div>` : ''}
   `;
 
   // Limpiamos los inputs para la próxima subida
