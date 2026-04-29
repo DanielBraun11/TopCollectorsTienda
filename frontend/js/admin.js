@@ -134,7 +134,7 @@ function asignarArchivo(zona, input, labelArchivo, file, tiposAceptados, textoTi
   actualizarBtnSubir();
 }
 
-setupDropZone($dropExcel, $inputExcel, $archivoExcel, ['.xlsx', '.xls'], 'Excel');
+setupDropZone($dropExcel, $inputExcel, $archivoExcel, ['.xlsx', '.xls', '.ods'], 'Excel');
 setupDropZone($dropZip,   $inputZip,   $archivoZip,   ['.zip'],          'ZIP');
 
 function actualizarBtnSubir() {
