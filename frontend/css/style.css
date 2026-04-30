@@ -412,10 +412,8 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Sección destacados */
 .destacados-section {
-  background:  rgba(255,255,255,0.72);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--borde);
-  padding:     28px 28px 24px;
+  background:    transparent;
+  padding:       28px 28px 24px;
 }
 
 .destacados-inner {
@@ -426,9 +424,10 @@ button { cursor: pointer; font-family: inherit; }
 .destacados-titulo {
   font-size:     1.2rem;
   font-weight:   800;
-  color:         var(--texto);
+  color:         #fff;
   margin-bottom: 18px;
   letter-spacing: -0.2px;
+  text-shadow:   0 1px 4px rgba(0,0,0,0.5);
 }
 
 .destacados-grid {
