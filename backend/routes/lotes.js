@@ -8,6 +8,25 @@ const db      = require('../database');
 
 
 // ============================================================
+// GET /api/lotes/destacados
+// ============================================================
+router.get('/destacados', (req, res) => {
+  try {
+    const lotes = db.prepare(`
+      SELECT l.*, c.nombre as coleccion_nombre, c.anyo as coleccion_anyo
+      FROM lotes l
+      JOIN colecciones c ON l.coleccion_id = c.id
+      WHERE l.destacado = 1 AND l.vendido = 0
+      ORDER BY l.id DESC
+    `).all();
+    res.json({ ok: true, lotes });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: 'Error al obtener destacados' });
+  }
+});
+
+
+// ============================================================
 // GET /api/lotes
 // ============================================================
 // Filtros opcionales por query params:
@@ -207,12 +226,34 @@ router.put('/:id', (req, res) => {
 // DELETE /api/lotes/:id
 // ============================================================
 router.delete('/:id', (req, res) => {
+  if (req.headers['x-admin-password'] !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
   try {
     const resultado = db.prepare('DELETE FROM lotes WHERE id = ?').run(req.params.id);
     if (resultado.changes === 0) return res.status(404).json({ ok: false, error: 'Lote no encontrado' });
     res.json({ ok: true, mensaje: 'Lote eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ ok: false, error: 'Error al eliminar el lote' });
+  }
+});
+
+
+// ============================================================
+// POST /api/lotes/:id/destacar
+// ============================================================
+router.post('/:id/destacar', (req, res) => {
+  if (req.headers['x-admin-password'] !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+  try {
+    const lote = db.prepare('SELECT destacado FROM lotes WHERE id = ?').get(req.params.id);
+    if (!lote) return res.status(404).json({ ok: false, error: 'Lote no encontrado' });
+    const nuevoValor = lote.destacado ? 0 : 1;
+    db.prepare('UPDATE lotes SET destacado = ? WHERE id = ?').run(nuevoValor, req.params.id);
+    res.json({ ok: true, destacado: nuevoValor });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: 'Error al destacar el lote' });
   }
 });
 

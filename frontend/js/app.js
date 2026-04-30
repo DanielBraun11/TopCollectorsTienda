@@ -6,29 +6,33 @@ const API = 'https://topcollectorstienda-production.up.railway.app/api';
 
 // ---- Estado de la app ----
 const estado = {
-  colecciones:      [],
-  coleccionActiva:  null,
-  equipoActivo:     null,
-  busqueda:         '',
-  modosBusqueda:    false,
+  colecciones:     [],
+  coleccionActiva: null,
+  equipoActivo:    null,
+  busqueda:        '',
+  modosBusqueda:   false,
+  esAdmin:         !!sessionStorage.getItem('tc_admin_pw'),
+  adminPw:         sessionStorage.getItem('tc_admin_pw') || '',
 };
 
 
 // ---- Refs DOM ----
-const $coleccionesList = document.getElementById('colecciones-list');
-const $equiposPanel    = document.getElementById('equipos-panel');
-const $equiposList     = document.getElementById('equipos-list');
-const $equipoSearch    = document.getElementById('equipo-search');
-const $grid            = document.getElementById('lotes-grid');
-const $contador        = document.getElementById('contador');
-const $tituloPrincipal = document.getElementById('titulo-principal');
-const $subtitulo       = document.getElementById('subtitulo');
-const $searchInput     = document.getElementById('search-input');
-const $searchClear     = document.getElementById('search-clear');
-const $searchTexto     = document.getElementById('search-texto');
-const $btnTodos        = document.getElementById('btn-todos');
-const $modal           = document.getElementById('modal');
-const $modalContenido  = document.getElementById('modal-contenido');
+const $coleccionesList    = document.getElementById('colecciones-list');
+const $equiposPanel       = document.getElementById('equipos-panel');
+const $equiposList        = document.getElementById('equipos-list');
+const $equipoSearch       = document.getElementById('equipo-search');
+const $grid               = document.getElementById('lotes-grid');
+const $contador           = document.getElementById('contador');
+const $tituloPrincipal    = document.getElementById('titulo-principal');
+const $subtitulo          = document.getElementById('subtitulo');
+const $searchInput        = document.getElementById('search-input');
+const $searchClear        = document.getElementById('search-clear');
+const $searchTexto        = document.getElementById('search-texto');
+const $btnTodos           = document.getElementById('btn-todos');
+const $modal              = document.getElementById('modal');
+const $modalContenido     = document.getElementById('modal-contenido');
+const $seccionDestacados  = document.getElementById('seccion-destacados');
+const $destacadosGrid     = document.getElementById('destacados-grid');
 
 
 // ============================================================
@@ -36,7 +40,28 @@ const $modalContenido  = document.getElementById('modal-contenido');
 // ============================================================
 async function init() {
   await cargarColecciones();
+  cargarDestacados();
   cargarLotes();
+}
+
+
+// ============================================================
+// DESTACADOS
+// ============================================================
+async function cargarDestacados() {
+  try {
+    const res  = await fetch(`${API}/lotes/destacados`);
+    const data = await res.json();
+    const lotes = data.lotes || [];
+    if (lotes.length === 0) {
+      $seccionDestacados.hidden = true;
+      return;
+    }
+    $seccionDestacados.hidden = false;
+    $destacadosGrid.innerHTML = lotes.map(l => cardHTML(l)).join('');
+  } catch {
+    $seccionDestacados.hidden = true;
+  }
 }
 
 
@@ -247,8 +272,19 @@ function renderLotes(lotes, total) {
     return;
   }
 
-  $grid.innerHTML = lotes.map(l => `
-    <div class="card" onclick="abrirModal(${l.id})">
+  $grid.innerHTML = lotes.map(l => cardHTML(l)).join('');
+}
+
+function cardHTML(l) {
+  return `
+    <div class="card" id="card-${l.id}" onclick="abrirModal(${l.id})">
+      ${estado.esAdmin ? `
+        <div class="card__admin-btns" onclick="event.stopPropagation()">
+          <button class="card__admin-btn card__admin-btn--star ${l.destacado ? 'activo' : ''}"
+            onclick="toggleDestacado(${l.id}, this)" title="Destacar">⭐</button>
+          <button class="card__admin-btn card__admin-btn--delete"
+            onclick="borrarLote(${l.id})" title="Eliminar">✕</button>
+        </div>` : ''}
       <div class="card__img-wrap">
         ${l.imagen_url
           ? `<img class="card__img" src="${l.imagen_url}" alt="${escHtml(l.titulo)}" loading="lazy">`
@@ -263,7 +299,7 @@ function renderLotes(lotes, total) {
         <div class="card__precio">${formatPrecio(l.precio)}</div>
       </div>
     </div>
-  `).join('');
+  `;
 }
 
 
@@ -371,6 +407,43 @@ function escHtml(str) {
 
 function formatPrecio(n) {
   return Number(n).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+}
+
+
+// ============================================================
+// ACCIONES ADMIN
+// ============================================================
+async function borrarLote(id) {
+  if (!confirm('¿Eliminar este lote definitivamente?')) return;
+  try {
+    const res = await fetch(`${API}/lotes/${id}`, {
+      method:  'DELETE',
+      headers: { 'x-admin-password': estado.adminPw }
+    });
+    const data = await res.json();
+    if (!data.ok) { alert('Error al eliminar: ' + data.error); return; }
+    // Quitar la card del DOM
+    document.getElementById(`card-${id}`)?.remove();
+    // Recargar destacados por si era uno de ellos
+    cargarDestacados();
+  } catch {
+    alert('Error de conexión al eliminar');
+  }
+}
+
+async function toggleDestacado(id, btn) {
+  try {
+    const res = await fetch(`${API}/lotes/${id}/destacar`, {
+      method:  'POST',
+      headers: { 'x-admin-password': estado.adminPw }
+    });
+    const data = await res.json();
+    if (!data.ok) { alert('Error: ' + data.error); return; }
+    btn.classList.toggle('activo', data.destacado === 1);
+    cargarDestacados();
+  } catch {
+    alert('Error de conexión al destacar');
+  }
 }
 
 

@@ -8,6 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "better-sqlite3": "^9.4.3",
     "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
