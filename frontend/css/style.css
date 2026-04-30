@@ -56,10 +56,15 @@ button { cursor: pointer; font-family: inherit; }
 }
 
 .header__logo {
-  display:     flex;
-  align-items: center;
-  gap:         12px;
+  display:         flex;
+  align-items:     center;
+  gap:             12px;
+  text-decoration: none;
+  color:           inherit;
+  cursor:          pointer;
 }
+
+.header__logo:hover { opacity: 0.85; }
 
 .header__logo-icon {
   font-size:   1.7rem;
