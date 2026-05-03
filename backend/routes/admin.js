@@ -16,17 +16,17 @@
 //   y luego las movemos a su destino final si el lote es válido.
 // ============================================================
 
-const express    = require('express');
-const router     = express.Router();
-const multer     = require('multer');
-const XLSX       = require('xlsx');
-const path       = require('path');
-const fs         = require('fs');
-const os         = require('os');
-const unzipper   = require('unzipper');
-const sharp      = require('sharp');
-const cloudinary = require('../cloudinary');
-const db         = require('../database');
+const express      = require('express');
+const router       = express.Router();
+const multer       = require('multer');
+const XLSX         = require('xlsx');
+const path         = require('path');
+const fs           = require('fs');
+const os           = require('os');
+const { execSync } = require('child_process');
+const sharp        = require('sharp');
+const cloudinary   = require('../cloudinary');
+const db           = require('../database');
 
 // Tamaño máximo al que se redimensionan las imágenes (lado más largo)
 const IMG_MAX_PX  = 1200;
@@ -119,34 +119,26 @@ async function subirACloudinary(rutaOrigen) {
 // ============================================================
 // Extrae todas las imágenes del .zip a una carpeta temporal.
 // Devuelve un Map con { nombreArchivo → rutaCompleta }.
-// Así podemos buscar imágenes por nombre de forma instantánea.
 // ============================================================
 function descomprimirZip(rutaZip, dirDestino) {
-  return new Promise((resolve, reject) => {
-    const imagenes = new Map();
+  const extensionesValidas = ['.jpg', '.jpeg', '.png', '.webp'];
+  if (!fs.existsSync(dirDestino)) fs.mkdirSync(dirDestino, { recursive: true });
 
-    if (!fs.existsSync(dirDestino)) fs.mkdirSync(dirDestino, { recursive: true });
+  execSync(`unzip -o "${rutaZip}" -d "${dirDestino}"`, { stdio: 'ignore' });
 
-    fs.createReadStream(rutaZip)
-      .pipe(unzipper.Parse())
-      .on('entry', (entry) => {
-        const nombreArchivo = path.basename(entry.path); // solo el nombre, sin carpetas
-        const extension     = path.extname(nombreArchivo).toLowerCase();
-
-        // Solo procesamos imágenes
-        const extensionesValidas = ['.jpg', '.jpeg', '.png', '.webp'];
-        if (extensionesValidas.includes(extension)) {
-          const rutaDestino = path.join(dirDestino, nombreArchivo);
-          entry.pipe(fs.createWriteStream(rutaDestino)).on('finish', () => {
-            imagenes.set(nombreArchivo.toLowerCase(), rutaDestino);
-          });
-        } else {
-          entry.autodrain(); // descartamos archivos que no sean imágenes
-        }
-      })
-      .on('close', () => resolve(imagenes))
-      .on('error', reject);
-  });
+  const imagenes = new Map();
+  function buscar(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const ruta = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        buscar(ruta);
+      } else if (extensionesValidas.includes(path.extname(entry.name).toLowerCase())) {
+        imagenes.set(entry.name.toLowerCase(), ruta);
+      }
+    }
+  }
+  buscar(dirDestino);
+  return Promise.resolve(imagenes);
 }
 
 
@@ -197,6 +189,26 @@ router.post('/fotomaton', upload.fields([
 
     if (filas.length === 0) {
       return res.status(400).json({ ok: false, error: 'El Excel está vacío' });
+    }
+
+    // --------------------------------------------------------
+    // 2b. MODO AUTO-RENAME: si la columna imagen está vacía,
+    //     asignamos las fotos por orden (cronológico = orden Excel)
+    // --------------------------------------------------------
+    const modoAutoRename = filas.every(f => !String(f['imagen'] || '').trim());
+    if (modoAutoRename) {
+      console.log('🔄 Modo auto-rename: asignando fotos por orden...');
+      const fotosOrdenadas = Array.from(mapaImagenes.keys()).sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true })
+      );
+      if (fotosOrdenadas.length !== filas.length) {
+        return res.status(400).json({
+          ok: false,
+          error: `El número de imágenes (${fotosOrdenadas.length}) no coincide con las filas del Excel (${filas.length})`
+        });
+      }
+      filas.forEach((fila, i) => { fila['imagen'] = fotosOrdenadas[i]; });
+      console.log(`   → ${fotosOrdenadas.length} fotos asignadas por orden`);
     }
 
     let subidos        = 0;
