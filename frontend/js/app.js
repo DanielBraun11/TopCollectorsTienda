@@ -8,12 +8,17 @@ const API = 'https://topcollectorstienda-production.up.railway.app/api';
 const estado = {
   colecciones:     [],
   coleccionActiva: null,
+  familiaActiva:   null,
   equipoActivo:    null,
   busqueda:        '',
   modosBusqueda:   false,
   esAdmin:         !!sessionStorage.getItem('tc_admin_pw'),
   adminPw:         sessionStorage.getItem('tc_admin_pw') || '',
 };
+
+function extraerFamilia(nombre) {
+  return nombre.replace(/\s+\d{4}(-\d{2,4})?$/, '').trim();
+}
 
 
 // ---- Refs DOM ----
@@ -85,18 +90,64 @@ function renderColecciones() {
     return;
   }
 
-  $coleccionesList.innerHTML = estado.colecciones.map(c => `
-    <li class="panel__item">
-      <button
-        class="panel__btn ${estado.coleccionActiva?.id === c.id ? 'active' : ''}"
-        data-id="${c.id}"
-        onclick="seleccionarColeccion(${c.id})"
-      >
-        <span class="panel__btn-name">${c.nombre}</span>
-        <span class="panel__btn-badge">${c.total_lotes}</span>
-      </button>
-    </li>
-  `).join('');
+  if (!estado.familiaActiva) {
+    // Nivel 1: mostrar familias agrupadas
+    const familias = {};
+    for (const c of estado.colecciones) {
+      const f = extraerFamilia(c.nombre);
+      if (!familias[f]) familias[f] = 0;
+      familias[f] += c.total_lotes;
+    }
+    $coleccionesList.innerHTML = Object.entries(familias).map(([nombre, total]) => `
+      <li class="panel__item">
+        <button class="panel__btn" onclick="seleccionarFamilia('${nombre.replace(/'/g, "\\'")}')">
+          <span class="panel__btn-name">${nombre}</span>
+          <span class="panel__btn-badge">${total}</span>
+        </button>
+      </li>
+    `).join('');
+  } else {
+    // Nivel 2: mostrar años de la familia activa
+    const colsFamilia = estado.colecciones.filter(c => extraerFamilia(c.nombre) === estado.familiaActiva);
+    $coleccionesList.innerHTML = `
+      <li class="panel__item">
+        <button class="panel__btn panel__btn--back" onclick="volverFamilias()">
+          ← ${estado.familiaActiva}
+        </button>
+      </li>
+      ${colsFamilia.map(c => `
+        <li class="panel__item">
+          <button
+            class="panel__btn panel__btn--anyo ${estado.coleccionActiva?.id === c.id ? 'active' : ''}"
+            onclick="seleccionarColeccion(${c.id})"
+          >
+            <span class="panel__btn-name">${c.nombre.replace(estado.familiaActiva, '').trim()}</span>
+            <span class="panel__btn-badge">${c.total_lotes}</span>
+          </button>
+        </li>
+      `).join('')}
+    `;
+  }
+}
+
+function seleccionarFamilia(familia) {
+  estado.familiaActiva   = familia;
+  estado.coleccionActiva = null;
+  estado.equipoActivo    = null;
+  $equiposPanel.hidden   = true;
+  renderColecciones();
+  actualizarTitulo();
+  cargarLotes();
+}
+
+function volverFamilias() {
+  estado.familiaActiva   = null;
+  estado.coleccionActiva = null;
+  estado.equipoActivo    = null;
+  $equiposPanel.hidden   = true;
+  renderColecciones();
+  actualizarTitulo();
+  cargarLotes();
 }
 
 
@@ -105,7 +156,7 @@ function renderColecciones() {
 // ============================================================
 async function seleccionarColeccion(id) {
   if (estado.coleccionActiva?.id === id) {
-    // Segundo click: deselecciona
+    // Segundo click: deselecciona (vuelve al nivel de años)
     estado.coleccionActiva = null;
     estado.equipoActivo    = null;
     $equiposPanel.hidden   = true;
@@ -192,6 +243,7 @@ document.getElementById('search-form')?.addEventListener('submit', e => {
   if (!q) return;
   estado.busqueda        = q;
   estado.coleccionActiva = null;
+  estado.familiaActiva   = null;
   estado.equipoActivo    = null;
   renderColecciones();
   $equiposPanel.hidden   = true;
@@ -215,6 +267,7 @@ function limpiarBusqueda() {
 
 $btnTodos?.addEventListener('click', () => {
   estado.coleccionActiva = null;
+  estado.familiaActiva   = null;
   estado.equipoActivo    = null;
   estado.busqueda        = '';
   $searchInput.value     = '';
@@ -316,6 +369,9 @@ function actualizarTitulo() {
   } else if (estado.coleccionActiva) {
     $tituloPrincipal.textContent = estado.coleccionActiva.nombre;
     $subtitulo.textContent       = 'Selecciona un equipo o navega todos los lotes';
+  } else if (estado.familiaActiva) {
+    $tituloPrincipal.textContent = estado.familiaActiva;
+    $subtitulo.textContent       = 'Selecciona una temporada';
   } else {
     $tituloPrincipal.textContent = 'Todos los lotes';
     $subtitulo.textContent       = '';

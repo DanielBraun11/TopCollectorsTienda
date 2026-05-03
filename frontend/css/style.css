@@ -305,6 +305,22 @@ button { cursor: pointer; font-family: inherit; }
   color:      #fff;
 }
 
+.panel__btn--back {
+  color:       var(--verde);
+  font-weight: 700;
+  font-size:   0.82rem;
+  border-bottom: 1px solid var(--borde);
+  margin-bottom: 4px;
+}
+
+.panel__btn--back:hover {
+  background: var(--verde-bg);
+}
+
+.panel__btn--anyo .panel__btn-name {
+  font-size: 0.85rem;
+}
+
 .panel__empty {
   padding:   24px 18px;
   color:     var(--texto-suave);
