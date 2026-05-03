@@ -16,17 +16,17 @@
 //   y luego las movemos a su destino final si el lote es válido.
 // ============================================================
 
-const express      = require('express');
-const router       = express.Router();
-const multer       = require('multer');
-const XLSX         = require('xlsx');
-const path         = require('path');
-const fs           = require('fs');
-const os           = require('os');
-const { execSync } = require('child_process');
-const sharp        = require('sharp');
-const cloudinary   = require('../cloudinary');
-const db           = require('../database');
+const express    = require('express');
+const router     = express.Router();
+const multer     = require('multer');
+const XLSX       = require('xlsx');
+const path       = require('path');
+const fs         = require('fs');
+const os         = require('os');
+const unzipper   = require('unzipper');
+const sharp      = require('sharp');
+const cloudinary = require('../cloudinary');
+const db         = require('../database');
 
 // Tamaño máximo al que se redimensionan las imágenes (lado más largo)
 const IMG_MAX_PX  = 1200;
@@ -124,21 +124,30 @@ function descomprimirZip(rutaZip, dirDestino) {
   const extensionesValidas = ['.jpg', '.jpeg', '.png', '.webp'];
   if (!fs.existsSync(dirDestino)) fs.mkdirSync(dirDestino, { recursive: true });
 
-  execSync(`unzip -o "${rutaZip}" -d "${dirDestino}"`, { stdio: 'ignore' });
+  return new Promise((resolve, reject) => {
+    const imagenes  = new Map();
+    const pendientes = [];
 
-  const imagenes = new Map();
-  function buscar(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const ruta = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        buscar(ruta);
-      } else if (extensionesValidas.includes(path.extname(entry.name).toLowerCase())) {
-        imagenes.set(entry.name.toLowerCase(), ruta);
-      }
-    }
-  }
-  buscar(dirDestino);
-  return Promise.resolve(imagenes);
+    fs.createReadStream(rutaZip)
+      .pipe(unzipper.Parse())
+      .on('entry', entry => {
+        const nombreArchivo = path.basename(entry.path);
+        const ext           = path.extname(nombreArchivo).toLowerCase();
+        if (extensionesValidas.includes(ext)) {
+          const rutaDestino = path.join(dirDestino, nombreArchivo);
+          const p = new Promise((res, rej) => {
+            entry.pipe(fs.createWriteStream(rutaDestino))
+              .on('finish', () => { imagenes.set(nombreArchivo.toLowerCase(), rutaDestino); res(); })
+              .on('error', rej);
+          });
+          pendientes.push(p);
+        } else {
+          entry.autodrain();
+        }
+      })
+      .on('close', () => Promise.all(pendientes).then(() => resolve(imagenes)).catch(reject))
+      .on('error', reject);
+  });
 }
 
 
