@@ -39,14 +39,8 @@ router.get('/destacados', (req, res) => {
 // ============================================================
 router.get('/', (req, res) => {
   try {
-    const { coleccion_id, equipo, jugador, numero_cromo, busqueda, vendido } = req.query;
+    const { coleccion_id, coleccion_ids, equipo, jugador, numero_cromo, busqueda, vendido } = req.query;
 
-    // CONCEPTO — Búsqueda combinada:
-    // Cuando el usuario escribe en la barra de búsqueda, no
-    // sabemos si está buscando un jugador, un equipo o un título.
-    // Por eso buscamos el texto en TODOS los campos relevantes
-    // a la vez usando OR. Así "Messi Barcelona" encuentra cromos
-    // donde "Messi" aparezca en título/jugador Y "Barcelona" en equipo.
     let sql      = `
       SELECT l.*, c.nombre as coleccion_nombre, c.anyo as coleccion_anyo
       FROM lotes l
@@ -58,6 +52,10 @@ router.get('/', (req, res) => {
     if (coleccion_id) {
       sql += ' AND l.coleccion_id = ?';
       params.push(coleccion_id);
+    } else if (coleccion_ids) {
+      const ids = coleccion_ids.split(',').map(Number).filter(Boolean);
+      sql += ` AND l.coleccion_id IN (${ids.map(() => '?').join(',')})`;
+      params.push(...ids);
     }
 
     if (equipo) {
@@ -96,6 +94,7 @@ router.get('/', (req, res) => {
     } else {
       sql += ' ORDER BY l.creado_en DESC';
     }
+    // coleccion_ids (familia sin año) usa ORDER BY creado_en DESC heredado del else
 
     const lotes = db.prepare(sql).all(...params);
     res.json({ ok: true, total: lotes.length, lotes });

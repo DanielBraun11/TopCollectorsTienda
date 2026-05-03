@@ -286,9 +286,17 @@ async function cargarLotes() {
   mostrarCargando();
 
   const params = new URLSearchParams();
-  if (estado.coleccionActiva) params.set('coleccion_id', estado.coleccionActiva.id);
-  if (estado.equipoActivo)    params.set('equipo', estado.equipoActivo);
-  if (estado.busqueda)        params.set('busqueda', estado.busqueda);
+  if (estado.coleccionActiva) {
+    params.set('coleccion_id', estado.coleccionActiva.id);
+  } else if (estado.familiaActiva) {
+    const ids = estado.colecciones
+      .filter(c => extraerFamilia(c.nombre) === estado.familiaActiva)
+      .map(c => c.id)
+      .join(',');
+    if (ids) params.set('coleccion_ids', ids);
+  }
+  if (estado.equipoActivo) params.set('equipo', estado.equipoActivo);
+  if (estado.busqueda)     params.set('busqueda', estado.busqueda);
 
   try {
     const res  = await fetch(`${API}/lotes?${params}`);
