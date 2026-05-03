@@ -347,7 +347,7 @@ function cardHTML(l) {
       <div class="card__body">
         <div class="card__coleccion">${escHtml(l.coleccion_nombre)}</div>
         <div class="card__titulo">${escHtml(l.titulo)}</div>
-        ${l.jugador ? `<div class="card__jugador">${escHtml(l.jugador)}</div>` : ''}
+        ${l.descripcion ? `<div class="card__jugador">${escHtml(l.descripcion)}</div>` : ''}
         ${l.equipo  ? `<div class="card__equipo">⚽ ${escHtml(l.equipo)}</div>` : ''}
         <div class="card__precio">${formatPrecio(l.precio)}</div>
       </div>
